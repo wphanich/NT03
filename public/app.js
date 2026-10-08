@@ -1,285 +1,15 @@
-<!DOCTYPE html>
-<html lang="th">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>ระบบรับงานใหม่ ทีม นต03</title>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@400;600&display=swap" rel="stylesheet">
-<style>
-  :root {
-    --bg: #f4f6f9;
-    --card: #ffffff;
-    --text: #1f2937;
-    --muted: #6b7280;
-    --border: #d1d5db;
-    --primary: #1d4ed8;
-    --primary-hover: #1e40af;
-    --danger: #b91c1c;
-    --ok: #15803d;
-    --warn-bg: #fef3c7;
-  }
-  * { box-sizing: border-box; }
-  body {
-    margin: 0;
-    font-family: "Sarabun", "Tahoma", sans-serif;
-    background: var(--bg);
-    color: var(--text);
-    font-size: 15px;
-  }
-  header {
-    background: var(--primary);
-    color: #fff;
-    padding: 14px 20px;
-  }
-  header h1 { margin: 0; font-size: 20px; }
-  header p { margin: 2px 0 0; font-size: 13px; opacity: .85; }
-  main { max-width: 1280px; margin: 0 auto; padding: 16px; }
-  .card {
-    background: var(--card);
-    border: 1px solid var(--border);
-    border-radius: 8px;
-    padding: 16px;
-    margin-bottom: 16px;
-  }
-  .card h2 { margin: 0 0 12px; font-size: 17px; }
-  .grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
-    gap: 12px 16px;
-  }
-  .full { grid-column: 1 / -1; }
-  fieldset.addr { border: 1px solid var(--border); border-radius: 6px; padding: 8px 12px 12px; margin: 0; min-width: 0; }
-  fieldset.addr legend { font-weight: 600; padding: 0 4px; }
-  fieldset.addr .grid { grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); }
-  label { display: block; font-weight: 600; margin-bottom: 4px; }
-  label .req { color: var(--danger); }
-  input, select, textarea {
-    width: 100%;
-    padding: 8px 10px;
-    border: 1px solid var(--border);
-    border-radius: 6px;
-    font: inherit;
-    background: #fff;
-  }
-  textarea { resize: vertical; min-height: 60px; }
-  input:focus, select:focus, textarea:focus {
-    outline: 2px solid #93c5fd;
-    border-color: var(--primary);
-  }
-  .hint { font-size: 12px; color: var(--muted); margin-top: 3px; min-height: 1em; }
-  .hint.err { color: var(--danger); }
-  .hint.ok { color: var(--ok); }
-  .actions { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 14px; }
-  button {
-    font: inherit;
-    padding: 8px 16px;
-    border-radius: 6px;
-    border: 1px solid var(--border);
-    background: #fff;
-    cursor: pointer;
-  }
-  button:hover { background: #f3f4f6; }
-  button.primary { background: var(--primary); color: #fff; border-color: var(--primary); }
-  button.primary:hover { background: var(--primary-hover); }
-  button.danger { color: var(--danger); border-color: #fca5a5; }
-  button.small { padding: 3px 10px; font-size: 13px; }
-  .editing-banner {
-    display: none;
-    background: var(--warn-bg);
-    padding: 6px 10px;
-    border-radius: 6px;
-    margin-bottom: 10px;
-  }
-  .filters {
-    display: grid;
-    grid-template-columns: 2fr 1fr 1fr 1fr 1fr;
-    gap: 8px;
-    margin-bottom: 12px;
-  }
-  @media (max-width: 800px) { .filters { grid-template-columns: 1fr 1fr; } }
-  .summary { display: flex; flex-wrap: wrap; gap: 20px; margin-bottom: 10px; color: var(--muted); }
-  .summary b { color: var(--text); }
-  .table-wrap { overflow-x: auto; }
-  table { width: 100%; border-collapse: collapse; font-size: 14px; }
-  th, td { border-bottom: 1px solid #e5e7eb; padding: 7px 8px; text-align: left; vertical-align: top; }
-  th { background: #f9fafb; white-space: nowrap; cursor: pointer; user-select: none; }
-  td.num, th.num { text-align: right; white-space: nowrap; }
-  td.nowrap { white-space: nowrap; }
-  tr:hover td { background: #f9fafb; }
-  .empty { text-align: center; color: var(--muted); padding: 24px; }
-  .toast {
-    position: fixed; right: 16px; bottom: 16px;
-    background: #111827; color: #fff;
-    padding: 10px 16px; border-radius: 6px;
-    opacity: 0; transition: opacity .25s; pointer-events: none;
-  }
-  .toast.show { opacity: .95; }
-  @media print {
-    header, #formCard, .filters, .actions, .no-print, .col-actions { display: none !important; }
-    body { background: #fff; }
-    .card { border: none; padding: 0; }
-    .print-title { display: block !important; }
-  }
-  .print-title { display: none; text-align: center; margin-bottom: 8px; }
-</style>
-</head>
-<body>
-<header>
-  <h1>ระบบรับงานใหม่ ทีม นต03</h1>
-  <p>บันทึก ค้นหา แก้ไข และส่งออกข้อมูลงานรับใหม่</p>
-</header>
+import { initializeApp } from "https://www.gstatic.com/firebasejs/12.18.0/firebase-app.js";
+import {
+  getAuth, connectAuthEmulator, onAuthStateChanged,
+  signInWithEmailAndPassword, signOut, sendPasswordResetEmail,
+} from "https://www.gstatic.com/firebasejs/12.18.0/firebase-auth.js";
+import {
+  getFirestore, connectFirestoreEmulator, collection, doc, getDoc, onSnapshot,
+  addDoc, updateDoc, deleteDoc, writeBatch, serverTimestamp, deleteField,
+} from "https://www.gstatic.com/firebasejs/12.18.0/firebase-firestore.js";
+import { firebaseConfig } from "./firebase-config.js";
 
-<main>
-  <!-- ฟอร์มรับงาน -->
-  <section class="card" id="formCard">
-    <h2 id="formTitle">บันทึกรับงานใหม่</h2>
-    <div class="editing-banner" id="editingBanner">กำลังแก้ไขรายการ — กด "บันทึก" เพื่อยืนยัน หรือ "ยกเลิก" เพื่อออกจากโหมดแก้ไข</div>
-    <form id="jobForm" novalidate>
-      <div class="grid">
-        <div>
-          <label for="receivedDate">วัน เดือน ปี รับงาน <span class="req">*</span></label>
-          <input type="date" id="receivedDate" required>
-          <div class="hint" id="receivedDateHint"></div>
-        </div>
-        <div>
-          <label for="inspectionType">ประเภทการตรวจ <span class="req">*</span></label>
-          <input type="text" id="inspectionType" list="inspectionTypeList" required placeholder="เลือกหรือพิมพ์ประเภทการตรวจ">
-          <datalist id="inspectionTypeList"></datalist>
-          <div class="hint"></div>
-        </div>
-        <div>
-          <label for="taxId">เลขประจำตัวผู้เสียภาษี <span class="req">*</span></label>
-          <input type="text" id="taxId" inputmode="numeric" maxlength="17" required placeholder="x-xxxx-xxxxx-xx-x">
-          <div class="hint" id="taxIdHint">ตัวเลข 13 หลัก</div>
-        </div>
-        <div>
-          <label for="name">ชื่อ <span class="req">*</span></label>
-          <input type="text" id="name" required placeholder="ชื่อบุคคล / นิติบุคคล">
-          <div class="hint"></div>
-        </div>
-        <fieldset class="full addr">
-          <legend>ที่อยู่</legend>
-          <div class="grid">
-            <div>
-              <label for="addrNo">เลขที่ <span class="req">*</span></label>
-              <input type="text" id="addrNo" required placeholder="เช่น 123/45">
-              <div class="hint" id="addrNoHint"></div>
-            </div>
-            <div>
-              <label for="addrBuilding">อาคาร</label>
-              <input type="text" id="addrBuilding">
-            </div>
-            <div>
-              <label for="addrFloor">ชั้น</label>
-              <input type="text" id="addrFloor">
-            </div>
-            <div>
-              <label for="addrSoi">ซอย</label>
-              <input type="text" id="addrSoi">
-            </div>
-            <div>
-              <label for="addrRoad">ถนน</label>
-              <input type="text" id="addrRoad">
-            </div>
-            <div>
-              <label for="addrProvince">จังหวัด <span class="req">*</span></label>
-              <select id="addrProvince" required></select>
-              <div class="hint"></div>
-            </div>
-            <div>
-              <label for="addrDistrict"><span id="addrDistrictLabel">เขต/อำเภอ</span> <span class="req">*</span></label>
-              <select id="addrDistrict" required disabled></select>
-              <div class="hint"></div>
-            </div>
-            <div>
-              <label for="addrSubdistrict"><span id="addrSubdistrictLabel">แขวง/ตำบล</span> <span class="req">*</span></label>
-              <select id="addrSubdistrict" required disabled></select>
-              <div class="hint"></div>
-            </div>
-            <div>
-              <label for="addrPostcode">รหัสไปรษณีย์</label>
-              <input type="text" id="addrPostcode" inputmode="numeric" maxlength="5" placeholder="เติมให้อัตโนมัติ">
-              <div class="hint"></div>
-            </div>
-          </div>
-        </fieldset>
-        <div>
-          <label for="refundAmount">จำนวนเงินคืนภาษี (บาท)</label>
-          <input type="text" id="refundAmount" inputmode="decimal" placeholder="0.00">
-          <div class="hint" id="refundAmountHint"></div>
-        </div>
-        <div>
-          <label for="team">ทีม <span class="req">*</span></label>
-          <input type="text" id="team" list="teamList" required placeholder="เช่น นต03">
-          <datalist id="teamList"></datalist>
-          <div class="hint"></div>
-        </div>
-        <div class="full">
-          <label for="note">หมายเหตุ</label>
-          <textarea id="note" rows="2"></textarea>
-        </div>
-      </div>
-      <div class="actions">
-        <button type="submit" class="primary" id="saveBtn">บันทึก</button>
-        <button type="button" id="resetBtn">ล้างฟอร์ม</button>
-        <button type="button" id="cancelEditBtn" style="display:none">ยกเลิกการแก้ไข</button>
-      </div>
-    </form>
-  </section>
-
-  <!-- รายการงาน -->
-  <section class="card">
-    <h2>รายการงานที่รับ</h2>
-    <div class="print-title"><h2>รายการรับงานใหม่ ทีม นต03</h2><div id="printDate"></div></div>
-    <div class="filters">
-      <input type="search" id="fSearch" placeholder="ค้นหา ชื่อ / เลขผู้เสียภาษี / ที่อยู่ / หมายเหตุ">
-      <select id="fType"><option value="">ทุกประเภทการตรวจ</option></select>
-      <select id="fTeam"><option value="">ทุกทีม</option></select>
-      <input type="date" id="fFrom" title="ตั้งแต่วันที่">
-      <input type="date" id="fTo" title="ถึงวันที่">
-    </div>
-    <div class="summary">
-      <span>จำนวนงาน: <b id="sumCount">0</b> ราย</span>
-      <span>รวมเงินคืนภาษี: <b id="sumAmount">0.00</b> บาท</span>
-    </div>
-    <div class="table-wrap">
-      <table>
-        <thead>
-          <tr>
-            <th>ลำดับ</th>
-            <th data-sort="receivedDate">วันที่รับงาน</th>
-            <th data-sort="inspectionType">ประเภทการตรวจ</th>
-            <th data-sort="taxId">เลขประจำตัวผู้เสียภาษี</th>
-            <th data-sort="name">ชื่อ</th>
-            <th>ที่อยู่</th>
-            <th data-sort="refundAmount" class="num">จำนวนเงินคืนภาษี</th>
-            <th data-sort="team">ทีม</th>
-            <th>หมายเหตุ</th>
-            <th class="col-actions"></th>
-          </tr>
-        </thead>
-        <tbody id="tbody"></tbody>
-      </table>
-    </div>
-    <div class="actions no-print">
-      <button type="button" id="exportCsvBtn">ส่งออก Excel (CSV)</button>
-      <button type="button" id="printBtn">พิมพ์รายงาน</button>
-      <button type="button" id="backupBtn">สำรองข้อมูล (JSON)</button>
-      <button type="button" id="restoreBtn">นำเข้าข้อมูลสำรอง</button>
-      <input type="file" id="restoreFile" accept=".json,application/json" hidden>
-    </div>
-  </section>
-</main>
-
-<div class="toast" id="toast"></div>
-
-<script src="thai-address.js"></script>
-<script>
-(function () {
-  "use strict";
-
-  const STORAGE_KEY = "nt03_jobs_v1";
+{
   const DEFAULT_TEAM = "นต03";
   const DEFAULT_TYPES = [
     "ตรวจคืนภาษีมูลค่าเพิ่ม (ภ.พ.30)",
@@ -327,27 +57,122 @@
     return parts.filter(Boolean).join(" ");
   }
 
-  let jobs = load();
+  let jobs = [];
   let editingId = null;
   let sortKey = "receivedDate";
   let sortDir = -1; // ใหม่สุดก่อน
+  let currentUser = null;
+  let unsubscribeJobs = null;
 
-  // ---------- storage ----------
-  function load() {
-    try {
-      const data = JSON.parse(localStorage.getItem(STORAGE_KEY) || "[]");
-      return Array.isArray(data) ? data : [];
-    } catch (e) {
-      return [];
+  // ---------- Firebase ----------
+  const configured = firebaseConfig && firebaseConfig.apiKey && !/^YOUR_/.test(firebaseConfig.apiKey);
+  let auth = null;
+  let db = null;
+  if (configured) {
+    const app = initializeApp(firebaseConfig);
+    auth = getAuth(app);
+    db = getFirestore(app);
+    // ทดสอบในเครื่องด้วย Firebase Emulator: เปิด http://localhost:5000/?emulator
+    if (["localhost", "127.0.0.1"].includes(location.hostname) &&
+        new URLSearchParams(location.search).has("emulator")) {
+      connectAuthEmulator(auth, "http://127.0.0.1:9099", { disableWarnings: true });
+      connectFirestoreEmulator(db, "127.0.0.1", 8080);
     }
   }
-  function save() {
-    try {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(jobs));
-    } catch (e) {
-      alert("ไม่สามารถบันทึกข้อมูลลงเบราว์เซอร์ได้: " + e.message);
-    }
+  const jobsCol = () => collection(db, "jobs");
+
+  function showScreen(name) {
+    ["setupScreen", "loginScreen", "noAccessScreen", "appScreen"].forEach((id) => {
+      $(id).hidden = id !== name;
+    });
+    $("userBox").hidden = name === "setupScreen" || name === "loginScreen";
   }
+
+  function stopListening() {
+    if (unsubscribeJobs) unsubscribeJobs();
+    unsubscribeJobs = null;
+    jobs = [];
+  }
+
+  function startListening() {
+    stopListening();
+    $("syncStatus").textContent = "กำลังโหลดข้อมูล...";
+    unsubscribeJobs = onSnapshot(jobsCol(), { includeMetadataChanges: true }, (snap) => {
+      jobs = snap.docs.map((d) => {
+        const data = d.data({ serverTimestamps: "estimate" });
+        return Object.assign({}, data, {
+          id: d.id,
+          createdAt: data.createdAt && data.createdAt.toMillis ? data.createdAt.toMillis() : 0,
+          updatedAt: data.updatedAt && data.updatedAt.toMillis ? data.updatedAt.toMillis() : 0,
+        });
+      });
+      $("syncStatus").textContent = snap.metadata.hasPendingWrites
+        ? "กำลังบันทึก..."
+        : "ข้อมูลล่าสุด " + new Date().toLocaleTimeString("th-TH");
+      render();
+    }, (err) => {
+      $("syncStatus").textContent = "โหลดข้อมูลไม่สำเร็จ";
+      alert("ไม่สามารถโหลดข้อมูลได้: " + err.message);
+    });
+  }
+
+  if (!configured) {
+    showScreen("setupScreen");
+  } else {
+    onAuthStateChanged(auth, async (user) => {
+      currentUser = user;
+      stopListening();
+      if (!user) { showScreen("loginScreen"); return; }
+      $("userEmail").textContent = user.email || user.uid;
+      // ต้องมีเอกสาร members/{uid} จึงจะใช้งานได้ (ผู้ดูแลเพิ่มใน Firebase Console)
+      let member = false;
+      try { member = (await getDoc(doc(db, "members", user.uid))).exists(); } catch (e) { member = false; }
+      if (!member) {
+        $("noAccessUid").textContent = user.uid;
+        $("noAccessEmail").textContent = user.email || "";
+        showScreen("noAccessScreen");
+        return;
+      }
+      showScreen("appScreen");
+      resetForm();
+      startListening();
+    });
+  }
+
+  $("loginForm").addEventListener("submit", async (e) => {
+    e.preventDefault();
+    const btn = $("loginBtn");
+    $("loginError").textContent = "";
+    btn.disabled = true;
+    try {
+      await signInWithEmailAndPassword(auth, $("loginEmail").value.trim(), $("loginPassword").value);
+      $("loginPassword").value = "";
+    } catch (err) {
+      $("loginError").textContent = ["auth/invalid-credential", "auth/wrong-password", "auth/user-not-found",
+                                     "auth/invalid-email"].includes(err.code)
+        ? "อีเมลหรือรหัสผ่านไม่ถูกต้อง"
+        : err.code === "auth/too-many-requests"
+          ? "เข้าสู่ระบบผิดหลายครั้ง กรุณารอสักครู่แล้วลองใหม่"
+          : "เข้าสู่ระบบไม่สำเร็จ: " + err.message;
+    } finally {
+      btn.disabled = false;
+    }
+  });
+
+  $("forgotBtn").addEventListener("click", async () => {
+    const email = $("loginEmail").value.trim();
+    if (!email) { $("loginError").textContent = "กรุณากรอกอีเมลก่อน แล้วกด \"ลืมรหัสผ่าน\" อีกครั้ง"; return; }
+    try {
+      await sendPasswordResetEmail(auth, email);
+      $("loginError").textContent = "";
+      toast("ส่งลิงก์ตั้งรหัสผ่านใหม่ไปที่ " + email + " แล้ว");
+    } catch (err) {
+      $("loginError").textContent = "ส่งอีเมลไม่สำเร็จ: " + err.message;
+    }
+  });
+
+  [$("logoutBtn"), $("noAccessLogoutBtn")].forEach((b) =>
+    b.addEventListener("click", () => signOut(auth)));
 
   // ---------- helpers ----------
   function todayISO() {
@@ -386,9 +211,6 @@
     return String(s == null ? "" : s).replace(/[&<>"']/g, (c) => ({
       "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;",
     }[c]));
-  }
-  function uid() {
-    return Date.now().toString(36) + Math.random().toString(36).slice(2, 8);
   }
   function toast(msg) {
     const t = $("toast");
@@ -536,7 +358,7 @@
     return ok ? data : null;
   }
 
-  form.addEventListener("submit", (e) => {
+  form.addEventListener("submit", async (e) => {
     e.preventDefault();
     const data = validate();
     if (!data) { toast("กรุณาตรวจสอบข้อมูลที่ไม่ถูกต้อง"); return; }
@@ -554,21 +376,30 @@
       return;
     }
 
-    const now = new Date().toISOString();
-    if (editingId) {
-      const idx = jobs.findIndex((j) => j.id === editingId);
-      if (idx >= 0) {
-        jobs[idx] = Object.assign({}, jobs[idx], data, { updatedAt: now });
-        delete jobs[idx].address; // ที่อยู่รูปแบบเดิม ถูกแทนด้วยช่องที่แยกแล้ว
+    const btn = $("saveBtn");
+    btn.disabled = true;
+    try {
+      const who = currentUser.email || currentUser.uid;
+      if (editingId) {
+        await updateDoc(doc(db, "jobs", editingId), Object.assign({}, data, {
+          address: deleteField(), // ที่อยู่รูปแบบเดิม ถูกแทนด้วยช่องที่แยกแล้ว
+          updatedAt: serverTimestamp(),
+          updatedBy: who,
+        }));
+        toast("แก้ไขข้อมูลเรียบร้อย");
+      } else {
+        await addDoc(jobsCol(), Object.assign({}, data, {
+          createdAt: serverTimestamp(),
+          createdBy: who,
+        }));
+        toast("บันทึกงานใหม่เรียบร้อย");
       }
-      toast("แก้ไขข้อมูลเรียบร้อย");
-    } else {
-      jobs.push(Object.assign({ id: uid(), createdAt: now }, data));
-      toast("บันทึกงานใหม่เรียบร้อย");
+      resetForm();
+    } catch (err) {
+      alert("บันทึกไม่สำเร็จ: " + err.message);
+    } finally {
+      btn.disabled = false;
     }
-    save();
-    resetForm();
-    render();
   });
 
   $("resetBtn").addEventListener("click", resetForm);
@@ -614,18 +445,26 @@
     $("formCard").scrollIntoView({ behavior: "smooth" });
   }
 
-  function remove(id) {
+  async function remove(id) {
     const j = jobs.find((x) => x.id === id);
     if (!j) return;
     if (!confirm("ต้องการลบงานของ \"" + j.name + "\" ใช่หรือไม่?")) return;
-    jobs = jobs.filter((x) => x.id !== id);
-    if (editingId === id) resetForm();
-    save();
-    render();
-    toast("ลบรายการแล้ว");
+    try {
+      await deleteDoc(doc(db, "jobs", id));
+      if (editingId === id) resetForm();
+      toast("ลบรายการแล้ว");
+    } catch (err) {
+      alert("ลบไม่สำเร็จ: " + err.message);
+    }
   }
 
   // ---------- list ----------
+  function auditText(j) {
+    const t = (ms) => (ms ? new Date(ms).toLocaleString("th-TH") : "");
+    let s = "บันทึกโดย " + (j.createdBy || "-") + " " + t(j.createdAt);
+    if (j.updatedBy) s += "\nแก้ไขล่าสุดโดย " + j.updatedBy + " " + t(j.updatedAt);
+    return s;
+  }
   function fillSelect(sel, values, allLabel) {
     const cur = sel.value;
     sel.innerHTML = '<option value="">' + allLabel + "</option>" +
@@ -657,7 +496,7 @@
     }).sort((a, b) => {
       const x = a[sortKey], y = b[sortKey];
       let c = typeof x === "number" ? x - y : String(x || "").localeCompare(String(y || ""), "th");
-      if (c === 0) c = String(a.createdAt).localeCompare(String(b.createdAt));
+      if (c === 0) c = (a.createdAt || 0) - (b.createdAt || 0);
       return c * sortDir;
     });
   }
@@ -680,7 +519,7 @@
         '<td class="nowrap">' + esc(thaiDate(j.receivedDate)) + "</td>" +
         "<td>" + esc(j.inspectionType) + "</td>" +
         '<td class="nowrap">' + esc(formatTaxId(j.taxId)) + "</td>" +
-        "<td>" + esc(j.name) + "</td>" +
+        '<td title="' + esc(auditText(j)) + '">' + esc(j.name) + "</td>" +
         "<td>" + esc(fullAddress(j)) + "</td>" +
         '<td class="num">' + money(j.refundAmount) + "</td>" +
         '<td class="nowrap">' + esc(j.team) + "</td>" +
@@ -736,7 +575,7 @@
     if (!rows.length) { toast("ไม่มีข้อมูลให้ส่งออก"); return; }
     const header = ["ลำดับ", "วัน เดือน ปี รับงาน", "ประเภทการตรวจ", "เลขประจำตัวผู้เสียภาษี",
                     "ชื่อ", "เลขที่", "อาคาร", "ชั้น", "ซอย", "ถนน", "แขวง/ตำบล", "เขต/อำเภอ",
-                    "จังหวัด", "รหัสไปรษณีย์", "ที่อยู่เต็ม", "จำนวนเงินคืนภาษี", "ทีม", "หมายเหตุ"];
+                    "จังหวัด", "รหัสไปรษณีย์", "ที่อยู่เต็ม", "จำนวนเงินคืนภาษี", "ทีม", "หมายเหตุ", "ผู้บันทึก"];
     const lines = [header.map(csvCell).join(",")];
     rows.forEach((j, i) => {
       lines.push([
@@ -745,7 +584,7 @@
         '="' + j.taxId + '"',
         j.name,
         ...ADDR_FIELDS.map((f) => j[f] || ""),
-        fullAddress(j), Number(j.refundAmount || 0).toFixed(2), j.team, j.note,
+        fullAddress(j), Number(j.refundAmount || 0).toFixed(2), j.team, j.note, j.createdBy,
       ].map(csvCell).join(","));
     });
     // BOM เพื่อให้ Excel อ่านภาษาไทยถูกต้อง
@@ -758,8 +597,28 @@
   });
 
   $("backupBtn").addEventListener("click", () => {
-    download("backup_นต03_" + todayISO() + ".json", JSON.stringify(jobs, null, 2), "application/json");
+    const out = jobs.map((j) => Object.assign({}, j, {
+      createdAt: j.createdAt ? new Date(j.createdAt).toISOString() : undefined,
+      updatedAt: j.updatedAt ? new Date(j.updatedAt).toISOString() : undefined,
+    }));
+    download("backup_นต03_" + todayISO() + ".json", JSON.stringify(out, null, 2), "application/json");
   });
+
+  // แปลงข้อมูลจากไฟล์สำรองให้ตรงกับรูปแบบที่ Firestore rules อนุญาต
+  function importable(j, who) {
+    const out = {};
+    fields.forEach((f) => { out[f] = f === "refundAmount" ? 0 : ""; });
+    fields.concat(["address"]).forEach((f) => {
+      if (j[f] != null && f !== "refundAmount") out[f] = String(j[f]).slice(0, 1000);
+    });
+    out.taxId = digitsOnly(j.taxId);
+    const amt = parseAmount(j.refundAmount);
+    out.refundAmount = isNaN(amt) ? 0 : amt;
+    if (!out.address) delete out.address;
+    out.createdAt = serverTimestamp();
+    out.createdBy = who;
+    return out;
+  }
 
   $("restoreBtn").addEventListener("click", () => $("restoreFile").click());
   $("restoreFile").addEventListener("change", (e) => {
@@ -767,23 +626,30 @@
     e.target.value = "";
     if (!file) return;
     const reader = new FileReader();
-    reader.onload = () => {
+    reader.onload = async () => {
       let data;
       try { data = JSON.parse(reader.result); } catch (err) { alert("ไฟล์ไม่ถูกต้อง"); return; }
       if (!Array.isArray(data)) { alert("รูปแบบไฟล์สำรองไม่ถูกต้อง"); return; }
-      const valid = data.filter((j) => j && j.id && j.receivedDate && j.taxId);
-      const replace = confirm("พบข้อมูล " + valid.length + " รายการ\n\n" +
-        "กด OK = แทนที่ข้อมูลเดิมทั้งหมด\nกด Cancel = รวมกับข้อมูลเดิม (ข้ามรายการที่ซ้ำ)");
-      if (replace) {
-        jobs = valid;
-      } else {
-        const ids = new Set(jobs.map((j) => j.id));
-        valid.forEach((j) => { if (!ids.has(j.id)) jobs.push(j); });
+      const existing = new Set(jobs.map((j) => j.id));
+      const items = data.filter((j) => j && /^[A-Za-z0-9_-]{1,100}$/.test(String(j.id)) &&
+                                       /^\d{4}-\d{2}-\d{2}$/.test(j.receivedDate) &&
+                                       /^\d{13}$/.test(digitsOnly(j.taxId)) && !existing.has(String(j.id)));
+      const skipped = data.length - items.length;
+      if (!items.length) { alert("ไม่มีรายการใหม่ให้นำเข้า (ซ้ำหรือไม่ถูกต้อง " + skipped + " รายการ)"); return; }
+      if (!confirm("นำเข้า " + items.length + " รายการ" +
+                   (skipped ? " (ข้าม " + skipped + " รายการที่ซ้ำหรือไม่ถูกต้อง)" : "") + " ใช่หรือไม่?")) return;
+      const who = currentUser.email || currentUser.uid;
+      try {
+        // Firestore จำกัด 500 รายการต่อ batch
+        for (let i = 0; i < items.length; i += 400) {
+          const batch = writeBatch(db);
+          items.slice(i, i + 400).forEach((j) => batch.set(doc(db, "jobs", String(j.id)), importable(j, who)));
+          await batch.commit();
+        }
+        toast("นำเข้าข้อมูล " + items.length + " รายการเรียบร้อย");
+      } catch (err) {
+        alert("นำเข้าไม่สำเร็จ: " + err.message);
       }
-      save();
-      resetForm();
-      render();
-      toast("นำเข้าข้อมูลเรียบร้อย");
     };
     reader.readAsText(file, "utf-8");
   });
@@ -791,7 +657,4 @@
   // ---------- init ----------
   resetForm();
   render();
-})();
-</script>
-</body>
-</html>
+}

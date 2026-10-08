@@ -12,7 +12,7 @@ import sys
 from pathlib import Path
 
 src = Path(sys.argv[1])
-out = Path(__file__).resolve().parent.parent / "thai-address.js"
+out = Path(__file__).resolve().parent.parent / "public" / "thai-address.js"
 
 data = json.loads(src.read_text(encoding="utf-8"))
 compact = [

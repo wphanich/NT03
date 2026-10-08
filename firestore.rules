@@ -1,0 +1,78 @@
+rules_version = '2';
+
+// ระบบรับงานใหม่ ทีม นต03
+// - ใช้งานได้เฉพาะผู้ที่เข้าสู่ระบบ และมีเอกสาร members/{uid} (ผู้ดูแลเพิ่มใน Firebase Console)
+// - ตรวจรูปแบบข้อมูลทุกครั้งที่บันทึก
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function isMember() {
+      return request.auth != null
+        && exists(/databases/$(database)/documents/members/$(request.auth.uid));
+    }
+
+    function str(d, k, maxLen) {
+      return d[k] is string && d[k].size() <= maxLen;
+    }
+    function optStr(d, k, maxLen) {
+      return !(k in d) || str(d, k, maxLen);
+    }
+    function reqStr(d, k, maxLen) {
+      return str(d, k, maxLen) && d[k].size() > 0;
+    }
+
+    function validJob(d) {
+      return d.keys().hasOnly([
+          'receivedDate', 'inspectionType', 'taxId', 'name',
+          'addrNo', 'addrBuilding', 'addrFloor', 'addrSoi', 'addrRoad',
+          'addrSubdistrict', 'addrDistrict', 'addrProvince', 'addrPostcode',
+          'address', 'refundAmount', 'team', 'note',
+          'createdAt', 'createdBy', 'updatedAt', 'updatedBy'])
+        && d.keys().hasAll(['receivedDate', 'inspectionType', 'taxId', 'name',
+                            'refundAmount', 'team', 'createdAt', 'createdBy'])
+        && d.receivedDate is string && d.receivedDate.matches('^[0-9]{4}-[0-9]{2}-[0-9]{2}$')
+        && reqStr(d, 'inspectionType', 200)
+        && d.taxId is string && d.taxId.matches('^[0-9]{13}$')
+        && reqStr(d, 'name', 500)
+        && optStr(d, 'addrNo', 100)
+        && optStr(d, 'addrBuilding', 200)
+        && optStr(d, 'addrFloor', 50)
+        && optStr(d, 'addrSoi', 200)
+        && optStr(d, 'addrRoad', 200)
+        && optStr(d, 'addrSubdistrict', 200)
+        && optStr(d, 'addrDistrict', 200)
+        && optStr(d, 'addrProvince', 200)
+        && (!('addrPostcode' in d) || (d.addrPostcode is string && d.addrPostcode.matches('^([0-9]{5})?$')))
+        && optStr(d, 'address', 1000)
+        && d.refundAmount is number && d.refundAmount >= 0 && d.refundAmount < 10000000000000
+        && reqStr(d, 'team', 100)
+        && optStr(d, 'note', 2000);
+    }
+
+    match /members/{uid} {
+      // ผู้ใช้อ่านได้เฉพาะสิทธิ์ของตัวเอง; เพิ่ม/ลบสมาชิกทำผ่าน Firebase Console เท่านั้น
+      allow read: if request.auth != null && request.auth.uid == uid;
+      allow write: if false;
+    }
+
+    match /jobs/{jobId} {
+      allow read: if isMember();
+
+      allow create: if isMember()
+        && validJob(request.resource.data)
+        && request.resource.data.createdAt == request.time
+        && request.resource.data.createdBy == request.auth.token.email
+        && !('updatedAt' in request.resource.data)
+        && !('updatedBy' in request.resource.data);
+
+      allow update: if isMember()
+        && validJob(request.resource.data)
+        && request.resource.data.createdAt == resource.data.createdAt
+        && request.resource.data.createdBy == resource.data.createdBy
+        && request.resource.data.updatedAt == request.time
+        && request.resource.data.updatedBy == request.auth.token.email;
+
+      allow delete: if isMember();
+    }
+  }
+}
