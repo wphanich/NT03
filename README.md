@@ -56,6 +56,27 @@ firebase deploy
 ```
 เสร็จแล้วจะได้ลิงก์ใช้งาน เช่น `https://nt03-jobs.web.app`
 
+### 3.1 Deploy อัตโนมัติด้วย GitHub Actions (แทนการรันคำสั่งเอง)
+เมื่อตั้งค่าครั้งเดียว ทุกครั้งที่ push เข้า branch `nt03-95409` ระบบจะ deploy ให้เอง
+(ไฟล์ `.github/workflows/deploy.yml`)
+
+**ก. สร้าง service account**
+1. เข้า <https://console.cloud.google.com/iam-admin/serviceaccounts?project=nt03-95409>
+2. **+ Create service account** → ตั้งชื่อ เช่น `github-deploy` → **Create and continue**
+3. เพิ่ม Role 2 รายการ แล้วกด **Done**
+   - **Firebase Admin**
+   - **Service Usage Consumer**
+4. คลิกที่ service account ที่สร้าง → แท็บ **Keys** → **Add key → Create new key → JSON** → จะได้ไฟล์ `.json`
+
+**ข. ใส่ใน GitHub**
+1. เข้า <https://github.com/wphanich/NT03/settings/secrets/actions> → **New repository secret**
+2. Name: `FIREBASE_SERVICE_ACCOUNT` / Secret: เปิดไฟล์ `.json` แล้ววาง **เนื้อหาทั้งหมด**
+3. ลบไฟล์ `.json` ออกจากเครื่องหลังใส่เสร็จ
+
+> ⚠️ ไฟล์ `.json` นี้คือกุญแจเข้าโปรเจกต์ — ห้าม commit ลง repo หรือส่งต่อให้ผู้อื่น
+
+**ค. ทดสอบ**: แท็บ **Actions** → **Deploy to Firebase** → **Run workflow** → เลือก branch → รอจนขึ้นเครื่องหมาย ✅
+
 ### 4. เพิ่มผู้ใช้งาน (ทำทุกครั้งที่มีสมาชิกใหม่)
 1. **Authentication → Users → Add user** ใส่อีเมลและรหัสผ่านเริ่มต้น → คัดลอกค่า **User UID**
 2. **Firestore Database → Start collection** (ครั้งแรก) หรือเข้าคอลเลกชัน `members` → **Add document**
