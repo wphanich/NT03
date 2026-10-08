@@ -190,9 +190,10 @@
         </div>
         <div>
           <label for="inspectionType">ประเภทการตรวจ <span class="req">*</span></label>
-          <input type="text" id="inspectionType" list="inspectionTypeList" required placeholder="เลือกหรือพิมพ์ประเภทการตรวจ">
-          <datalist id="inspectionTypeList"></datalist>
+          <select id="inspectionType" required></select>
           <div class="hint"></div>
+          <input type="text" id="inspectionOther" maxlength="200" placeholder="ระบุประเภทการตรวจ" hidden style="margin-top:6px">
+          <div class="hint" id="inspectionOtherHint"></div>
         </div>
         <div>
           <label for="taxId">เลขประจำตัวผู้เสียภาษี <span class="req">*</span></label>

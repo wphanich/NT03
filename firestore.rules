@@ -23,7 +23,7 @@ service cloud.firestore {
 
     function validJob(d) {
       return d.keys().hasOnly([
-          'receivedDate', 'inspectionType', 'taxId', 'name',
+          'receivedDate', 'inspectionType', 'inspectionOther', 'taxId', 'name',
           'addrNo', 'addrBuilding', 'addrFloor', 'addrSoi', 'addrRoad',
           'addrSubdistrict', 'addrDistrict', 'addrProvince', 'addrPostcode',
           'address', 'refundAmount', 'team', 'note',
@@ -32,6 +32,7 @@ service cloud.firestore {
                             'refundAmount', 'team', 'createdAt', 'createdBy'])
         && d.receivedDate is string && d.receivedDate.matches('^[0-9]{4}-[0-9]{2}-[0-9]{2}$')
         && reqStr(d, 'inspectionType', 200)
+        && optStr(d, 'inspectionOther', 200)
         && d.taxId is string && d.taxId.matches('^[0-9]{13}$')
         && reqStr(d, 'name', 500)
         && optStr(d, 'addrNo', 100)
