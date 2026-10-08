@@ -1,0 +1,634 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ระบบรับงานใหม่ ทีม นต03</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@400;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #f4f6f9;
+    --card: #ffffff;
+    --text: #1f2937;
+    --muted: #6b7280;
+    --border: #d1d5db;
+    --primary: #1d4ed8;
+    --primary-hover: #1e40af;
+    --danger: #b91c1c;
+    --ok: #15803d;
+    --warn-bg: #fef3c7;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    font-family: "Sarabun", "Tahoma", sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    font-size: 15px;
+  }
+  header {
+    background: var(--primary);
+    color: #fff;
+    padding: 14px 20px;
+  }
+  header h1 { margin: 0; font-size: 20px; }
+  header p { margin: 2px 0 0; font-size: 13px; opacity: .85; }
+  main { max-width: 1280px; margin: 0 auto; padding: 16px; }
+  .card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 16px;
+    margin-bottom: 16px;
+  }
+  .card h2 { margin: 0 0 12px; font-size: 17px; }
+  .grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+    gap: 12px 16px;
+  }
+  .full { grid-column: 1 / -1; }
+  label { display: block; font-weight: 600; margin-bottom: 4px; }
+  label .req { color: var(--danger); }
+  input, select, textarea {
+    width: 100%;
+    padding: 8px 10px;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    font: inherit;
+    background: #fff;
+  }
+  textarea { resize: vertical; min-height: 60px; }
+  input:focus, select:focus, textarea:focus {
+    outline: 2px solid #93c5fd;
+    border-color: var(--primary);
+  }
+  .hint { font-size: 12px; color: var(--muted); margin-top: 3px; min-height: 1em; }
+  .hint.err { color: var(--danger); }
+  .hint.ok { color: var(--ok); }
+  .actions { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 14px; }
+  button {
+    font: inherit;
+    padding: 8px 16px;
+    border-radius: 6px;
+    border: 1px solid var(--border);
+    background: #fff;
+    cursor: pointer;
+  }
+  button:hover { background: #f3f4f6; }
+  button.primary { background: var(--primary); color: #fff; border-color: var(--primary); }
+  button.primary:hover { background: var(--primary-hover); }
+  button.danger { color: var(--danger); border-color: #fca5a5; }
+  button.small { padding: 3px 10px; font-size: 13px; }
+  .editing-banner {
+    display: none;
+    background: var(--warn-bg);
+    padding: 6px 10px;
+    border-radius: 6px;
+    margin-bottom: 10px;
+  }
+  .filters {
+    display: grid;
+    grid-template-columns: 2fr 1fr 1fr 1fr 1fr;
+    gap: 8px;
+    margin-bottom: 12px;
+  }
+  @media (max-width: 800px) { .filters { grid-template-columns: 1fr 1fr; } }
+  .summary { display: flex; flex-wrap: wrap; gap: 20px; margin-bottom: 10px; color: var(--muted); }
+  .summary b { color: var(--text); }
+  .table-wrap { overflow-x: auto; }
+  table { width: 100%; border-collapse: collapse; font-size: 14px; }
+  th, td { border-bottom: 1px solid #e5e7eb; padding: 7px 8px; text-align: left; vertical-align: top; }
+  th { background: #f9fafb; white-space: nowrap; cursor: pointer; user-select: none; }
+  td.num, th.num { text-align: right; white-space: nowrap; }
+  td.nowrap { white-space: nowrap; }
+  tr:hover td { background: #f9fafb; }
+  .empty { text-align: center; color: var(--muted); padding: 24px; }
+  .toast {
+    position: fixed; right: 16px; bottom: 16px;
+    background: #111827; color: #fff;
+    padding: 10px 16px; border-radius: 6px;
+    opacity: 0; transition: opacity .25s; pointer-events: none;
+  }
+  .toast.show { opacity: .95; }
+  @media print {
+    header, #formCard, .filters, .actions, .no-print, .col-actions { display: none !important; }
+    body { background: #fff; }
+    .card { border: none; padding: 0; }
+    .print-title { display: block !important; }
+  }
+  .print-title { display: none; text-align: center; margin-bottom: 8px; }
+</style>
+</head>
+<body>
+<header>
+  <h1>ระบบรับงานใหม่ ทีม นต03</h1>
+  <p>บันทึก ค้นหา แก้ไข และส่งออกข้อมูลงานรับใหม่</p>
+</header>
+
+<main>
+  <!-- ฟอร์มรับงาน -->
+  <section class="card" id="formCard">
+    <h2 id="formTitle">บันทึกรับงานใหม่</h2>
+    <div class="editing-banner" id="editingBanner">กำลังแก้ไขรายการ — กด "บันทึก" เพื่อยืนยัน หรือ "ยกเลิก" เพื่อออกจากโหมดแก้ไข</div>
+    <form id="jobForm" novalidate>
+      <div class="grid">
+        <div>
+          <label for="receivedDate">วัน เดือน ปี รับงาน <span class="req">*</span></label>
+          <input type="date" id="receivedDate" required>
+          <div class="hint" id="receivedDateHint"></div>
+        </div>
+        <div>
+          <label for="inspectionType">ประเภทการตรวจ <span class="req">*</span></label>
+          <input type="text" id="inspectionType" list="inspectionTypeList" required placeholder="เลือกหรือพิมพ์ประเภทการตรวจ">
+          <datalist id="inspectionTypeList"></datalist>
+          <div class="hint"></div>
+        </div>
+        <div>
+          <label for="taxId">เลขประจำตัวผู้เสียภาษี <span class="req">*</span></label>
+          <input type="text" id="taxId" inputmode="numeric" maxlength="17" required placeholder="x-xxxx-xxxxx-xx-x">
+          <div class="hint" id="taxIdHint">ตัวเลข 13 หลัก</div>
+        </div>
+        <div>
+          <label for="name">ชื่อ <span class="req">*</span></label>
+          <input type="text" id="name" required placeholder="ชื่อบุคคล / นิติบุคคล">
+          <div class="hint"></div>
+        </div>
+        <div class="full">
+          <label for="address">ที่อยู่</label>
+          <textarea id="address" rows="2" placeholder="เลขที่ ถนน ตำบล/แขวง อำเภอ/เขต จังหวัด รหัสไปรษณีย์"></textarea>
+        </div>
+        <div>
+          <label for="refundAmount">จำนวนเงินคืนภาษี (บาท)</label>
+          <input type="text" id="refundAmount" inputmode="decimal" placeholder="0.00">
+          <div class="hint" id="refundAmountHint"></div>
+        </div>
+        <div>
+          <label for="team">ทีม <span class="req">*</span></label>
+          <input type="text" id="team" list="teamList" required placeholder="เช่น นต03">
+          <datalist id="teamList"></datalist>
+          <div class="hint"></div>
+        </div>
+        <div class="full">
+          <label for="note">หมายเหตุ</label>
+          <textarea id="note" rows="2"></textarea>
+        </div>
+      </div>
+      <div class="actions">
+        <button type="submit" class="primary" id="saveBtn">บันทึก</button>
+        <button type="button" id="resetBtn">ล้างฟอร์ม</button>
+        <button type="button" id="cancelEditBtn" style="display:none">ยกเลิกการแก้ไข</button>
+      </div>
+    </form>
+  </section>
+
+  <!-- รายการงาน -->
+  <section class="card">
+    <h2>รายการงานที่รับ</h2>
+    <div class="print-title"><h2>รายการรับงานใหม่ ทีม นต03</h2><div id="printDate"></div></div>
+    <div class="filters">
+      <input type="search" id="fSearch" placeholder="ค้นหา ชื่อ / เลขผู้เสียภาษี / ที่อยู่ / หมายเหตุ">
+      <select id="fType"><option value="">ทุกประเภทการตรวจ</option></select>
+      <select id="fTeam"><option value="">ทุกทีม</option></select>
+      <input type="date" id="fFrom" title="ตั้งแต่วันที่">
+      <input type="date" id="fTo" title="ถึงวันที่">
+    </div>
+    <div class="summary">
+      <span>จำนวนงาน: <b id="sumCount">0</b> ราย</span>
+      <span>รวมเงินคืนภาษี: <b id="sumAmount">0.00</b> บาท</span>
+    </div>
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>ลำดับ</th>
+            <th data-sort="receivedDate">วันที่รับงาน</th>
+            <th data-sort="inspectionType">ประเภทการตรวจ</th>
+            <th data-sort="taxId">เลขประจำตัวผู้เสียภาษี</th>
+            <th data-sort="name">ชื่อ</th>
+            <th>ที่อยู่</th>
+            <th data-sort="refundAmount" class="num">จำนวนเงินคืนภาษี</th>
+            <th data-sort="team">ทีม</th>
+            <th>หมายเหตุ</th>
+            <th class="col-actions"></th>
+          </tr>
+        </thead>
+        <tbody id="tbody"></tbody>
+      </table>
+    </div>
+    <div class="actions no-print">
+      <button type="button" id="exportCsvBtn">ส่งออก Excel (CSV)</button>
+      <button type="button" id="printBtn">พิมพ์รายงาน</button>
+      <button type="button" id="backupBtn">สำรองข้อมูล (JSON)</button>
+      <button type="button" id="restoreBtn">นำเข้าข้อมูลสำรอง</button>
+      <input type="file" id="restoreFile" accept=".json,application/json" hidden>
+    </div>
+  </section>
+</main>
+
+<div class="toast" id="toast"></div>
+
+<script>
+(function () {
+  "use strict";
+
+  const STORAGE_KEY = "nt03_jobs_v1";
+  const DEFAULT_TEAM = "นต03";
+  const DEFAULT_TYPES = [
+    "ตรวจคืนภาษีมูลค่าเพิ่ม (ภ.พ.30)",
+    "ตรวจคืนภาษีเงินได้นิติบุคคล",
+    "ตรวจคืนภาษีเงินได้บุคคลธรรมดา",
+    "ตรวจสอบภาษี",
+    "ตรวจปฏิบัติการ",
+    "ตรวจแนะนำ",
+  ];
+  const THAI_MONTHS = ["ม.ค.", "ก.พ.", "มี.ค.", "เม.ย.", "พ.ค.", "มิ.ย.",
+                       "ก.ค.", "ส.ค.", "ก.ย.", "ต.ค.", "พ.ย.", "ธ.ค."];
+
+  const $ = (id) => document.getElementById(id);
+  const form = $("jobForm");
+  const fields = ["receivedDate", "inspectionType", "taxId", "name",
+                  "address", "refundAmount", "team", "note"];
+
+  let jobs = load();
+  let editingId = null;
+  let sortKey = "receivedDate";
+  let sortDir = -1; // ใหม่สุดก่อน
+
+  // ---------- storage ----------
+  function load() {
+    try {
+      const data = JSON.parse(localStorage.getItem(STORAGE_KEY) || "[]");
+      return Array.isArray(data) ? data : [];
+    } catch (e) {
+      return [];
+    }
+  }
+  function save() {
+    try {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(jobs));
+    } catch (e) {
+      alert("ไม่สามารถบันทึกข้อมูลลงเบราว์เซอร์ได้: " + e.message);
+    }
+  }
+
+  // ---------- helpers ----------
+  function todayISO() {
+    const d = new Date();
+    d.setMinutes(d.getMinutes() - d.getTimezoneOffset());
+    return d.toISOString().slice(0, 10);
+  }
+  function thaiDate(iso) {
+    if (!iso) return "";
+    const [y, m, d] = iso.split("-").map(Number);
+    return d + " " + THAI_MONTHS[m - 1] + " " + (y + 543);
+  }
+  function digitsOnly(s) { return String(s || "").replace(/\D/g, ""); }
+  function formatTaxId(s) {
+    const d = digitsOnly(s);
+    if (d.length !== 13) return s || "";
+    return d[0] + "-" + d.slice(1, 5) + "-" + d.slice(5, 10) + "-" + d.slice(10, 12) + "-" + d[12];
+  }
+  // ตรวจสอบหลักตรวจสอบ (check digit) ของเลข 13 หลัก
+  function validTaxIdChecksum(d) {
+    if (!/^\d{13}$/.test(d)) return false;
+    let sum = 0;
+    for (let i = 0; i < 12; i++) sum += Number(d[i]) * (13 - i);
+    return (11 - (sum % 11)) % 10 === Number(d[12]);
+  }
+  function parseAmount(s) {
+    const t = String(s || "").replace(/[,\s]/g, "");
+    if (t === "") return 0;
+    if (!/^\d+(\.\d{0,2})?$/.test(t)) return NaN;
+    return Math.round(Number(t) * 100) / 100;
+  }
+  function money(n) {
+    return Number(n || 0).toLocaleString("th-TH", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  }
+  function esc(s) {
+    return String(s == null ? "" : s).replace(/[&<>"']/g, (c) => ({
+      "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;",
+    }[c]));
+  }
+  function uid() {
+    return Date.now().toString(36) + Math.random().toString(36).slice(2, 8);
+  }
+  function toast(msg) {
+    const t = $("toast");
+    t.textContent = msg;
+    t.classList.add("show");
+    clearTimeout(toast._t);
+    toast._t = setTimeout(() => t.classList.remove("show"), 2200);
+  }
+  function setHint(id, msg, cls) {
+    const el = $(id).parentElement.querySelector(".hint");
+    if (!el) return;
+    el.textContent = msg || "";
+    el.className = "hint" + (cls ? " " + cls : "");
+  }
+  function uniqueValues(key, defaults) {
+    const set = new Set(defaults || []);
+    jobs.forEach((j) => j[key] && set.add(j[key]));
+    return Array.from(set).sort((a, b) => a.localeCompare(b, "th"));
+  }
+
+  // ---------- form ----------
+  function resetForm() {
+    form.reset();
+    editingId = null;
+    $("receivedDate").value = todayISO();
+    $("team").value = DEFAULT_TEAM;
+    $("formTitle").textContent = "บันทึกรับงานใหม่";
+    $("editingBanner").style.display = "none";
+    $("cancelEditBtn").style.display = "none";
+    $("saveBtn").textContent = "บันทึก";
+    form.querySelectorAll(".hint").forEach((h) => { h.textContent = ""; h.className = "hint"; });
+    $("taxIdHint").textContent = "ตัวเลข 13 หลัก";
+    updateDateHint();
+  }
+
+  function updateDateHint() {
+    const v = $("receivedDate").value;
+    setHint("receivedDate", v ? thaiDate(v) : "", "");
+  }
+
+  function validate() {
+    let ok = true;
+    const data = {};
+    fields.forEach((f) => { data[f] = $(f).value.trim(); });
+
+    ["receivedDate", "inspectionType", "name", "team"].forEach((f) => {
+      if (!data[f]) { setHint(f, "กรุณากรอกข้อมูล", "err"); ok = false; }
+      else if (f !== "receivedDate") setHint(f, "");
+    });
+    if (data.receivedDate) updateDateHint();
+
+    const tax = digitsOnly(data.taxId);
+    if (tax.length !== 13) {
+      setHint("taxId", "ต้องเป็นตัวเลข 13 หลัก (กรอกแล้ว " + tax.length + " หลัก)", "err");
+      ok = false;
+    }
+    data.taxId = tax;
+
+    const amt = parseAmount(data.refundAmount);
+    if (isNaN(amt) || amt < 0) {
+      setHint("refundAmount", "จำนวนเงินไม่ถูกต้อง (ทศนิยมไม่เกิน 2 ตำแหน่ง)", "err");
+      ok = false;
+    } else {
+      setHint("refundAmount", "");
+    }
+    data.refundAmount = amt;
+
+    return ok ? data : null;
+  }
+
+  form.addEventListener("submit", (e) => {
+    e.preventDefault();
+    const data = validate();
+    if (!data) { toast("กรุณาตรวจสอบข้อมูลที่ไม่ถูกต้อง"); return; }
+
+    if (!validTaxIdChecksum(data.taxId) &&
+        !confirm("เลขประจำตัวผู้เสียภาษี " + formatTaxId(data.taxId) +
+                 " ไม่ผ่านการตรวจสอบหลักสุดท้าย\nต้องการบันทึกต่อหรือไม่?")) {
+      return;
+    }
+
+    const dup = jobs.find((j) => j.id !== editingId && j.taxId === data.taxId &&
+                                 j.inspectionType === data.inspectionType);
+    if (dup && !confirm("มีงานของเลขผู้เสียภาษีนี้ ประเภท \"" + data.inspectionType +
+                        "\" แล้ว (รับเมื่อ " + thaiDate(dup.receivedDate) + ")\nต้องการบันทึกซ้ำหรือไม่?")) {
+      return;
+    }
+
+    const now = new Date().toISOString();
+    if (editingId) {
+      const idx = jobs.findIndex((j) => j.id === editingId);
+      if (idx >= 0) jobs[idx] = Object.assign({}, jobs[idx], data, { updatedAt: now });
+      toast("แก้ไขข้อมูลเรียบร้อย");
+    } else {
+      jobs.push(Object.assign({ id: uid(), createdAt: now }, data));
+      toast("บันทึกงานใหม่เรียบร้อย");
+    }
+    save();
+    resetForm();
+    render();
+  });
+
+  $("resetBtn").addEventListener("click", resetForm);
+  $("cancelEditBtn").addEventListener("click", resetForm);
+  $("receivedDate").addEventListener("change", updateDateHint);
+
+  $("taxId").addEventListener("input", () => {
+    const d = digitsOnly($("taxId").value).slice(0, 13);
+    if (d.length < 13) {
+      setHint("taxId", "ตัวเลข 13 หลัก (กรอกแล้ว " + d.length + " หลัก)", "");
+    } else if (validTaxIdChecksum(d)) {
+      setHint("taxId", "รูปแบบเลขถูกต้อง", "ok");
+    } else {
+      setHint("taxId", "หลักตรวจสอบไม่ถูกต้อง กรุณาตรวจสอบอีกครั้ง", "err");
+    }
+  });
+  $("taxId").addEventListener("blur", () => { $("taxId").value = formatTaxId($("taxId").value); });
+
+  $("refundAmount").addEventListener("blur", () => {
+    const v = parseAmount($("refundAmount").value);
+    if ($("refundAmount").value.trim() !== "" && !isNaN(v)) $("refundAmount").value = money(v);
+  });
+  $("refundAmount").addEventListener("focus", () => {
+    $("refundAmount").value = $("refundAmount").value.replace(/,/g, "");
+  });
+
+  function startEdit(id) {
+    const j = jobs.find((x) => x.id === id);
+    if (!j) return;
+    editingId = id;
+    fields.forEach((f) => { $(f).value = j[f] == null ? "" : j[f]; });
+    $("taxId").value = formatTaxId(j.taxId);
+    $("refundAmount").value = j.refundAmount ? money(j.refundAmount) : "";
+    $("formTitle").textContent = "แก้ไขข้อมูลงาน";
+    $("editingBanner").style.display = "block";
+    $("cancelEditBtn").style.display = "inline-block";
+    $("saveBtn").textContent = "บันทึกการแก้ไข";
+    updateDateHint();
+    $("formCard").scrollIntoView({ behavior: "smooth" });
+  }
+
+  function remove(id) {
+    const j = jobs.find((x) => x.id === id);
+    if (!j) return;
+    if (!confirm("ต้องการลบงานของ \"" + j.name + "\" ใช่หรือไม่?")) return;
+    jobs = jobs.filter((x) => x.id !== id);
+    if (editingId === id) resetForm();
+    save();
+    render();
+    toast("ลบรายการแล้ว");
+  }
+
+  // ---------- list ----------
+  function fillSelect(sel, values, allLabel) {
+    const cur = sel.value;
+    sel.innerHTML = '<option value="">' + allLabel + "</option>" +
+      values.map((v) => '<option value="' + esc(v) + '">' + esc(v) + "</option>").join("");
+    sel.value = values.includes(cur) ? cur : "";
+  }
+  function fillDatalist(dl, values) {
+    dl.innerHTML = values.map((v) => '<option value="' + esc(v) + '">').join("");
+  }
+
+  function filtered() {
+    const q = $("fSearch").value.trim().toLowerCase();
+    const qDigits = digitsOnly(q);
+    const type = $("fType").value;
+    const team = $("fTeam").value;
+    const from = $("fFrom").value;
+    const to = $("fTo").value;
+    return jobs.filter((j) => {
+      if (type && j.inspectionType !== type) return false;
+      if (team && j.team !== team) return false;
+      if (from && j.receivedDate < from) return false;
+      if (to && j.receivedDate > to) return false;
+      if (q) {
+        const hay = [j.name, j.address, j.note, j.inspectionType, j.team].join(" ").toLowerCase();
+        const hit = hay.includes(q) || (qDigits && j.taxId.includes(qDigits));
+        if (!hit) return false;
+      }
+      return true;
+    }).sort((a, b) => {
+      const x = a[sortKey], y = b[sortKey];
+      let c = typeof x === "number" ? x - y : String(x || "").localeCompare(String(y || ""), "th");
+      if (c === 0) c = String(a.createdAt).localeCompare(String(b.createdAt));
+      return c * sortDir;
+    });
+  }
+
+  function render() {
+    fillSelect($("fType"), uniqueValues("inspectionType"), "ทุกประเภทการตรวจ");
+    fillSelect($("fTeam"), uniqueValues("team"), "ทุกทีม");
+    fillDatalist($("inspectionTypeList"), uniqueValues("inspectionType", DEFAULT_TYPES));
+    fillDatalist($("teamList"), uniqueValues("team", [DEFAULT_TEAM]));
+
+    const rows = filtered();
+    const tbody = $("tbody");
+    if (!rows.length) {
+      tbody.innerHTML = '<tr><td colspan="10" class="empty">' +
+        (jobs.length ? "ไม่พบรายการตามเงื่อนไขที่ค้นหา" : "ยังไม่มีข้อมูลงาน") + "</td></tr>";
+    } else {
+      tbody.innerHTML = rows.map((j, i) =>
+        "<tr>" +
+        "<td>" + (i + 1) + "</td>" +
+        '<td class="nowrap">' + esc(thaiDate(j.receivedDate)) + "</td>" +
+        "<td>" + esc(j.inspectionType) + "</td>" +
+        '<td class="nowrap">' + esc(formatTaxId(j.taxId)) + "</td>" +
+        "<td>" + esc(j.name) + "</td>" +
+        "<td>" + esc(j.address) + "</td>" +
+        '<td class="num">' + money(j.refundAmount) + "</td>" +
+        '<td class="nowrap">' + esc(j.team) + "</td>" +
+        "<td>" + esc(j.note) + "</td>" +
+        '<td class="col-actions nowrap">' +
+          '<button class="small" data-edit="' + esc(j.id) + '">แก้ไข</button> ' +
+          '<button class="small danger" data-del="' + esc(j.id) + '">ลบ</button>' +
+        "</td></tr>"
+      ).join("");
+    }
+    $("sumCount").textContent = rows.length.toLocaleString("th-TH");
+    $("sumAmount").textContent = money(rows.reduce((s, j) => s + (Number(j.refundAmount) || 0), 0));
+
+    document.querySelectorAll("th[data-sort]").forEach((th) => {
+      const base = th.textContent.replace(/ [▲▼]$/, "");
+      th.textContent = base + (th.dataset.sort === sortKey ? (sortDir === 1 ? " ▲" : " ▼") : "");
+    });
+  }
+
+  $("tbody").addEventListener("click", (e) => {
+    const b = e.target.closest("button");
+    if (!b) return;
+    if (b.dataset.edit) startEdit(b.dataset.edit);
+    if (b.dataset.del) remove(b.dataset.del);
+  });
+  document.querySelectorAll("th[data-sort]").forEach((th) => {
+    th.addEventListener("click", () => {
+      if (sortKey === th.dataset.sort) sortDir = -sortDir;
+      else { sortKey = th.dataset.sort; sortDir = 1; }
+      render();
+    });
+  });
+  ["fSearch", "fType", "fTeam", "fFrom", "fTo"].forEach((id) =>
+    $(id).addEventListener("input", render));
+
+  // ---------- export / backup ----------
+  function download(filename, content, type) {
+    const blob = new Blob([content], { type });
+    const a = document.createElement("a");
+    a.href = URL.createObjectURL(blob);
+    a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 0);
+  }
+  function csvCell(v) {
+    const s = String(v == null ? "" : v);
+    return /[",\n\r]/.test(s) ? '"' + s.replace(/"/g, '""') + '"' : s;
+  }
+
+  $("exportCsvBtn").addEventListener("click", () => {
+    const rows = filtered();
+    if (!rows.length) { toast("ไม่มีข้อมูลให้ส่งออก"); return; }
+    const header = ["ลำดับ", "วัน เดือน ปี รับงาน", "ประเภทการตรวจ", "เลขประจำตัวผู้เสียภาษี",
+                    "ชื่อ", "ที่อยู่", "จำนวนเงินคืนภาษี", "ทีม", "หมายเหตุ"];
+    const lines = [header.map(csvCell).join(",")];
+    rows.forEach((j, i) => {
+      lines.push([
+        i + 1, thaiDate(j.receivedDate), j.inspectionType,
+        // ใส่ ="..." เพื่อไม่ให้ Excel ตัดเลข 0 นำหน้า / แปลงเป็นเลขยกกำลัง
+        '="' + j.taxId + '"',
+        j.name, j.address, Number(j.refundAmount || 0).toFixed(2), j.team, j.note,
+      ].map(csvCell).join(","));
+    });
+    // BOM เพื่อให้ Excel อ่านภาษาไทยถูกต้อง
+    download("รับงานใหม่_นต03_" + todayISO() + ".csv", "﻿" + lines.join("\r\n"), "text/csv;charset=utf-8");
+  });
+
+  $("printBtn").addEventListener("click", () => {
+    $("printDate").textContent = "พิมพ์เมื่อ " + thaiDate(todayISO());
+    window.print();
+  });
+
+  $("backupBtn").addEventListener("click", () => {
+    download("backup_นต03_" + todayISO() + ".json", JSON.stringify(jobs, null, 2), "application/json");
+  });
+
+  $("restoreBtn").addEventListener("click", () => $("restoreFile").click());
+  $("restoreFile").addEventListener("change", (e) => {
+    const file = e.target.files[0];
+    e.target.value = "";
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = () => {
+      let data;
+      try { data = JSON.parse(reader.result); } catch (err) { alert("ไฟล์ไม่ถูกต้อง"); return; }
+      if (!Array.isArray(data)) { alert("รูปแบบไฟล์สำรองไม่ถูกต้อง"); return; }
+      const valid = data.filter((j) => j && j.id && j.receivedDate && j.taxId);
+      const replace = confirm("พบข้อมูล " + valid.length + " รายการ\n\n" +
+        "กด OK = แทนที่ข้อมูลเดิมทั้งหมด\nกด Cancel = รวมกับข้อมูลเดิม (ข้ามรายการที่ซ้ำ)");
+      if (replace) {
+        jobs = valid;
+      } else {
+        const ids = new Set(jobs.map((j) => j.id));
+        valid.forEach((j) => { if (!ids.has(j.id)) jobs.push(j); });
+      }
+      save();
+      resetForm();
+      render();
+      toast("นำเข้าข้อมูลเรียบร้อย");
+    };
+    reader.readAsText(file, "utf-8");
+  });
+
+  // ---------- init ----------
+  resetForm();
+  render();
+})();
+</script>
+</body>
+</html>
