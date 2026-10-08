@@ -11,13 +11,15 @@ import { firebaseConfig } from "./firebase-config.js";
 
 {
   const DEFAULT_TEAM = "นต03";
+  const OTHER_TYPE = "ตรวจอื่นๆ"; // เลือกแล้วต้องพิมพ์ระบุเพิ่มในช่อง inspectionOther
   const DEFAULT_TYPES = [
     "ตรวจคืนภาษีมูลค่าเพิ่ม (ภ.พ.30)",
     "ตรวจคืนภาษีเงินได้นิติบุคคล",
     "ตรวจคืนภาษีเงินได้บุคคลธรรมดา",
-    "ตรวจสอบภาษี",
+    "ตรวจวิเคราะห์ฯ",
     "ตรวจปฏิบัติการ",
     "ตรวจแนะนำ",
+    OTHER_TYPE,
   ];
   const THAI_MONTHS = ["ม.ค.", "ก.พ.", "มี.ค.", "เม.ย.", "พ.ค.", "มิ.ย.",
                        "ก.ค.", "ส.ค.", "ก.ย.", "ต.ค.", "พ.ย.", "ธ.ค."];
@@ -27,7 +29,7 @@ import { firebaseConfig } from "./firebase-config.js";
   const ADDR_FIELDS = ["addrNo", "addrBuilding", "addrFloor", "addrSoi", "addrRoad",
                        "addrSubdistrict", "addrDistrict", "addrProvince", "addrPostcode"];
   const ADDR_REQUIRED = ["addrNo", "addrSubdistrict", "addrDistrict", "addrProvince"];
-  const fields = ["receivedDate", "inspectionType", "taxId", "name"]
+  const fields = ["receivedDate", "inspectionType", "inspectionOther", "taxId", "name"]
     .concat(ADDR_FIELDS, ["refundAmount", "team", "note"]);
   const BANGKOK = "กรุงเทพมหานคร";
   // จังหวัด > เขต/อำเภอ > แขวง/ตำบล > รหัสไปรษณีย์ (ข้อมูลจาก thai-address.js)
@@ -220,7 +222,7 @@ import { firebaseConfig } from "./firebase-config.js";
     toast._t = setTimeout(() => t.classList.remove("show"), 2200);
   }
   function setHint(id, msg, cls) {
-    const el = $(id).parentElement.querySelector(".hint");
+    const el = $(id + "Hint") || $(id).parentElement.querySelector(".hint");
     if (!el) return;
     el.textContent = msg || "";
     el.className = "hint" + (cls ? " " + cls : "");
@@ -300,6 +302,29 @@ import { firebaseConfig } from "./firebase-config.js";
     });
   }
 
+  // ---------- ประเภทการตรวจ ----------
+  function typeLabel(j) {
+    return j.inspectionType === OTHER_TYPE && j.inspectionOther
+      ? OTHER_TYPE + " (" + j.inspectionOther + ")"
+      : j.inspectionType || "";
+  }
+
+  // ค่าเดิมที่ไม่อยู่ในรายการ (เช่น ข้อมูลที่บันทึกก่อนเปลี่ยนรายการ) ยังแสดงและเลือกไว้ได้
+  function setInspectionType(type, other) {
+    fillOptions($("inspectionType"), DEFAULT_TYPES, "-- เลือกประเภทการตรวจ --", type);
+    $("inspectionOther").value = other || "";
+    toggleInspectionOther();
+  }
+  function toggleInspectionOther() {
+    const show = $("inspectionType").value === OTHER_TYPE;
+    $("inspectionOther").hidden = !show;
+    if (!show) setHint("inspectionOther", "");
+  }
+  $("inspectionType").addEventListener("change", () => {
+    toggleInspectionOther();
+    if (!$("inspectionOther").hidden) $("inspectionOther").focus();
+  });
+
   // ---------- form ----------
   function resetForm() {
     form.reset();
@@ -307,6 +332,7 @@ import { firebaseConfig } from "./firebase-config.js";
     $("receivedDate").value = todayISO();
     $("team").value = DEFAULT_TEAM;
     setAddress("", "", "");
+    setInspectionType("", "");
     $("formTitle").textContent = "บันทึกรับงานใหม่";
     $("editingBanner").style.display = "none";
     $("cancelEditBtn").style.display = "none";
@@ -330,6 +356,14 @@ import { firebaseConfig } from "./firebase-config.js";
       if (!data[f]) { setHint(f, "กรุณากรอกข้อมูล", "err"); ok = false; }
       else if (f !== "receivedDate") setHint(f, "");
     });
+
+    if (data.inspectionType === OTHER_TYPE && !data.inspectionOther) {
+      setHint("inspectionOther", "กรุณาระบุประเภทการตรวจ", "err");
+      ok = false;
+    } else {
+      setHint("inspectionOther", "");
+    }
+    if (data.inspectionType !== OTHER_TYPE) data.inspectionOther = "";
 
     if (data.addrPostcode && !/^\d{5}$/.test(data.addrPostcode)) {
       setHint("addrPostcode", "รหัสไปรษณีย์ต้องเป็นตัวเลข 5 หลัก", "err");
@@ -370,8 +404,8 @@ import { firebaseConfig } from "./firebase-config.js";
     }
 
     const dup = jobs.find((j) => j.id !== editingId && j.taxId === data.taxId &&
-                                 j.inspectionType === data.inspectionType);
-    if (dup && !confirm("มีงานของเลขผู้เสียภาษีนี้ ประเภท \"" + data.inspectionType +
+                                 typeLabel(j) === typeLabel(data));
+    if (dup && !confirm("มีงานของเลขผู้เสียภาษีนี้ ประเภท \"" + typeLabel(data) +
                         "\" แล้ว (รับเมื่อ " + thaiDate(dup.receivedDate) + ")\nต้องการบันทึกซ้ำหรือไม่?")) {
       return;
     }
@@ -432,6 +466,7 @@ import { firebaseConfig } from "./firebase-config.js";
     editingId = id;
     fields.forEach((f) => { $(f).value = j[f] == null ? "" : j[f]; });
     setAddress(j.addrProvince, j.addrDistrict, j.addrSubdistrict);
+    setInspectionType(j.inspectionType, j.inspectionOther);
     $("taxId").value = formatTaxId(j.taxId);
     $("refundAmount").value = j.refundAmount ? money(j.refundAmount) : "";
     $("formTitle").textContent = "แก้ไขข้อมูลงาน";
@@ -488,7 +523,7 @@ import { firebaseConfig } from "./firebase-config.js";
       if (from && j.receivedDate < from) return false;
       if (to && j.receivedDate > to) return false;
       if (q) {
-        const hay = [j.name, fullAddress(j), j.note, j.inspectionType, j.team].join(" ").toLowerCase();
+        const hay = [j.name, fullAddress(j), j.note, typeLabel(j), j.team].join(" ").toLowerCase();
         const hit = hay.includes(q) || (qDigits && j.taxId.includes(qDigits));
         if (!hit) return false;
       }
@@ -504,7 +539,6 @@ import { firebaseConfig } from "./firebase-config.js";
   function render() {
     fillSelect($("fType"), uniqueValues("inspectionType"), "ทุกประเภทการตรวจ");
     fillSelect($("fTeam"), uniqueValues("team"), "ทุกทีม");
-    fillDatalist($("inspectionTypeList"), uniqueValues("inspectionType", DEFAULT_TYPES));
     fillDatalist($("teamList"), uniqueValues("team", [DEFAULT_TEAM]));
 
     const rows = filtered();
@@ -517,7 +551,7 @@ import { firebaseConfig } from "./firebase-config.js";
         "<tr>" +
         "<td>" + (i + 1) + "</td>" +
         '<td class="nowrap">' + esc(thaiDate(j.receivedDate)) + "</td>" +
-        "<td>" + esc(j.inspectionType) + "</td>" +
+        "<td>" + esc(typeLabel(j)) + "</td>" +
         '<td class="nowrap">' + esc(formatTaxId(j.taxId)) + "</td>" +
         '<td title="' + esc(auditText(j)) + '">' + esc(j.name) + "</td>" +
         "<td>" + esc(fullAddress(j)) + "</td>" +
@@ -579,7 +613,7 @@ import { firebaseConfig } from "./firebase-config.js";
     const lines = [header.map(csvCell).join(",")];
     rows.forEach((j, i) => {
       lines.push([
-        i + 1, thaiDate(j.receivedDate), j.inspectionType,
+        i + 1, thaiDate(j.receivedDate), typeLabel(j),
         // ใส่ ="..." เพื่อไม่ให้ Excel ตัดเลข 0 นำหน้า / แปลงเป็นเลขยกกำลัง
         '="' + j.taxId + '"',
         j.name,
