@@ -49,6 +49,9 @@
     gap: 12px 16px;
   }
   .full { grid-column: 1 / -1; }
+  fieldset.addr { border: 1px solid var(--border); border-radius: 6px; padding: 8px 12px 12px; margin: 0; min-width: 0; }
+  fieldset.addr legend { font-weight: 600; padding: 0 4px; }
+  fieldset.addr .grid { grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); }
   label { display: block; font-weight: 600; margin-bottom: 4px; }
   label .req { color: var(--danger); }
   input, select, textarea {
@@ -155,10 +158,49 @@
           <input type="text" id="name" required placeholder="ชื่อบุคคล / นิติบุคคล">
           <div class="hint"></div>
         </div>
-        <div class="full">
-          <label for="address">ที่อยู่</label>
-          <textarea id="address" rows="2" placeholder="เลขที่ ถนน ตำบล/แขวง อำเภอ/เขต จังหวัด รหัสไปรษณีย์"></textarea>
-        </div>
+        <fieldset class="full addr">
+          <legend>ที่อยู่</legend>
+          <div class="grid">
+            <div>
+              <label for="addrNo">เลขที่ <span class="req">*</span></label>
+              <input type="text" id="addrNo" required placeholder="เช่น 123/45">
+              <div class="hint" id="addrNoHint"></div>
+            </div>
+            <div>
+              <label for="addrBuilding">อาคาร</label>
+              <input type="text" id="addrBuilding">
+            </div>
+            <div>
+              <label for="addrFloor">ชั้น</label>
+              <input type="text" id="addrFloor">
+            </div>
+            <div>
+              <label for="addrSoi">ซอย</label>
+              <input type="text" id="addrSoi">
+            </div>
+            <div>
+              <label for="addrSubdistrict">แขวง/ตำบล <span class="req">*</span></label>
+              <input type="text" id="addrSubdistrict" required>
+              <div class="hint"></div>
+            </div>
+            <div>
+              <label for="addrDistrict">เขต/อำเภอ <span class="req">*</span></label>
+              <input type="text" id="addrDistrict" required>
+              <div class="hint"></div>
+            </div>
+            <div>
+              <label for="addrProvince">จังหวัด <span class="req">*</span></label>
+              <input type="text" id="addrProvince" list="provinceList" required placeholder="เลือกหรือพิมพ์จังหวัด">
+              <datalist id="provinceList"></datalist>
+              <div class="hint"></div>
+            </div>
+            <div>
+              <label for="addrPostcode">รหัสไปรษณีย์</label>
+              <input type="text" id="addrPostcode" inputmode="numeric" maxlength="5">
+              <div class="hint"></div>
+            </div>
+          </div>
+        </fieldset>
         <div>
           <label for="refundAmount">จำนวนเงินคืนภาษี (บาท)</label>
           <input type="text" id="refundAmount" inputmode="decimal" placeholder="0.00">
@@ -248,8 +290,41 @@
 
   const $ = (id) => document.getElementById(id);
   const form = $("jobForm");
-  const fields = ["receivedDate", "inspectionType", "taxId", "name",
-                  "address", "refundAmount", "team", "note"];
+  const ADDR_FIELDS = ["addrNo", "addrBuilding", "addrFloor", "addrSoi",
+                       "addrSubdistrict", "addrDistrict", "addrProvince", "addrPostcode"];
+  const ADDR_REQUIRED = ["addrNo", "addrSubdistrict", "addrDistrict", "addrProvince"];
+  const fields = ["receivedDate", "inspectionType", "taxId", "name"]
+    .concat(ADDR_FIELDS, ["refundAmount", "team", "note"]);
+  const BANGKOK = "กรุงเทพมหานคร";
+  const PROVINCES = [
+    BANGKOK, "กระบี่", "กาญจนบุรี", "กาฬสินธุ์", "กำแพงเพชร", "ขอนแก่น", "จันทบุรี", "ฉะเชิงเทรา",
+    "ชลบุรี", "ชัยนาท", "ชัยภูมิ", "ชุมพร", "เชียงราย", "เชียงใหม่", "ตรัง", "ตราด", "ตาก",
+    "นครนายก", "นครปฐม", "นครพนม", "นครราชสีมา", "นครศรีธรรมราช", "นครสวรรค์", "นนทบุรี",
+    "นราธิวาส", "น่าน", "บึงกาฬ", "บุรีรัมย์", "ปทุมธานี", "ประจวบคีรีขันธ์", "ปราจีนบุรี",
+    "ปัตตานี", "พระนครศรีอยุธยา", "พะเยา", "พังงา", "พัทลุง", "พิจิตร", "พิษณุโลก", "เพชรบุรี",
+    "เพชรบูรณ์", "แพร่", "ภูเก็ต", "มหาสารคาม", "มุกดาหาร", "แม่ฮ่องสอน", "ยะลา", "ยโสธร",
+    "ร้อยเอ็ด", "ระนอง", "ระยอง", "ราชบุรี", "ลพบุรี", "ลำปาง", "ลำพูน", "เลย", "ศรีสะเกษ",
+    "สกลนคร", "สงขลา", "สตูล", "สมุทรปราการ", "สมุทรสงคราม", "สมุทรสาคร", "สระแก้ว", "สระบุรี",
+    "สิงห์บุรี", "สุโขทัย", "สุพรรณบุรี", "สุราษฎร์ธานี", "สุรินทร์", "หนองคาย", "หนองบัวลำภู",
+    "อ่างทอง", "อำนาจเจริญ", "อุดรธานี", "อุตรดิตถ์", "อุทัยธานี", "อุบลราชธานี",
+  ];
+
+  // รวมที่อยู่เป็นข้อความเดียว (กทม. ใช้ แขวง/เขต จังหวัดอื่นใช้ ตำบล/อำเภอ)
+  function fullAddress(j) {
+    if (!j.addrNo && !j.addrProvince) return j.address || ""; // ข้อมูลรูปแบบเดิม
+    const bkk = j.addrProvince === BANGKOK;
+    const parts = [
+      j.addrNo && "เลขที่ " + j.addrNo,
+      j.addrBuilding && "อาคาร" + j.addrBuilding,
+      j.addrFloor && "ชั้น " + j.addrFloor,
+      j.addrSoi && "ซอย" + j.addrSoi,
+      j.addrSubdistrict && (bkk ? "แขวง" : "ตำบล") + j.addrSubdistrict,
+      j.addrDistrict && (bkk ? "เขต" : "อำเภอ") + j.addrDistrict,
+      j.addrProvince && (bkk ? j.addrProvince : "จังหวัด" + j.addrProvince),
+      j.addrPostcode,
+    ];
+    return parts.filter(Boolean).join(" ");
+  }
 
   let jobs = load();
   let editingId = null;
@@ -358,10 +433,17 @@
     const data = {};
     fields.forEach((f) => { data[f] = $(f).value.trim(); });
 
-    ["receivedDate", "inspectionType", "name", "team"].forEach((f) => {
+    ["receivedDate", "inspectionType", "name", "team"].concat(ADDR_REQUIRED).forEach((f) => {
       if (!data[f]) { setHint(f, "กรุณากรอกข้อมูล", "err"); ok = false; }
       else if (f !== "receivedDate") setHint(f, "");
     });
+
+    if (data.addrPostcode && !/^\d{5}$/.test(data.addrPostcode)) {
+      setHint("addrPostcode", "รหัสไปรษณีย์ต้องเป็นตัวเลข 5 หลัก", "err");
+      ok = false;
+    } else {
+      setHint("addrPostcode", "");
+    }
     if (data.receivedDate) updateDateHint();
 
     const tax = digitsOnly(data.taxId);
@@ -404,7 +486,10 @@
     const now = new Date().toISOString();
     if (editingId) {
       const idx = jobs.findIndex((j) => j.id === editingId);
-      if (idx >= 0) jobs[idx] = Object.assign({}, jobs[idx], data, { updatedAt: now });
+      if (idx >= 0) {
+        jobs[idx] = Object.assign({}, jobs[idx], data, { updatedAt: now });
+        delete jobs[idx].address; // ที่อยู่รูปแบบเดิม ถูกแทนด้วยช่องที่แยกแล้ว
+      }
       toast("แก้ไขข้อมูลเรียบร้อย");
     } else {
       jobs.push(Object.assign({ id: uid(), createdAt: now }, data));
@@ -451,6 +536,9 @@
     $("cancelEditBtn").style.display = "inline-block";
     $("saveBtn").textContent = "บันทึกการแก้ไข";
     updateDateHint();
+    if (j.address && !j.addrNo) {
+      setHint("addrNo", "ที่อยู่เดิม: " + j.address + " — กรุณากรอกแยกช่อง", "err");
+    }
     $("formCard").scrollIntoView({ behavior: "smooth" });
   }
 
@@ -489,7 +577,7 @@
       if (from && j.receivedDate < from) return false;
       if (to && j.receivedDate > to) return false;
       if (q) {
-        const hay = [j.name, j.address, j.note, j.inspectionType, j.team].join(" ").toLowerCase();
+        const hay = [j.name, fullAddress(j), j.note, j.inspectionType, j.team].join(" ").toLowerCase();
         const hit = hay.includes(q) || (qDigits && j.taxId.includes(qDigits));
         if (!hit) return false;
       }
@@ -507,6 +595,7 @@
     fillSelect($("fTeam"), uniqueValues("team"), "ทุกทีม");
     fillDatalist($("inspectionTypeList"), uniqueValues("inspectionType", DEFAULT_TYPES));
     fillDatalist($("teamList"), uniqueValues("team", [DEFAULT_TEAM]));
+    if (!$("provinceList").options.length) fillDatalist($("provinceList"), PROVINCES);
 
     const rows = filtered();
     const tbody = $("tbody");
@@ -521,7 +610,7 @@
         "<td>" + esc(j.inspectionType) + "</td>" +
         '<td class="nowrap">' + esc(formatTaxId(j.taxId)) + "</td>" +
         "<td>" + esc(j.name) + "</td>" +
-        "<td>" + esc(j.address) + "</td>" +
+        "<td>" + esc(fullAddress(j)) + "</td>" +
         '<td class="num">' + money(j.refundAmount) + "</td>" +
         '<td class="nowrap">' + esc(j.team) + "</td>" +
         "<td>" + esc(j.note) + "</td>" +
@@ -575,14 +664,17 @@
     const rows = filtered();
     if (!rows.length) { toast("ไม่มีข้อมูลให้ส่งออก"); return; }
     const header = ["ลำดับ", "วัน เดือน ปี รับงาน", "ประเภทการตรวจ", "เลขประจำตัวผู้เสียภาษี",
-                    "ชื่อ", "ที่อยู่", "จำนวนเงินคืนภาษี", "ทีม", "หมายเหตุ"];
+                    "ชื่อ", "เลขที่", "อาคาร", "ชั้น", "ซอย", "แขวง/ตำบล", "เขต/อำเภอ",
+                    "จังหวัด", "รหัสไปรษณีย์", "ที่อยู่เต็ม", "จำนวนเงินคืนภาษี", "ทีม", "หมายเหตุ"];
     const lines = [header.map(csvCell).join(",")];
     rows.forEach((j, i) => {
       lines.push([
         i + 1, thaiDate(j.receivedDate), j.inspectionType,
         // ใส่ ="..." เพื่อไม่ให้ Excel ตัดเลข 0 นำหน้า / แปลงเป็นเลขยกกำลัง
         '="' + j.taxId + '"',
-        j.name, j.address, Number(j.refundAmount || 0).toFixed(2), j.team, j.note,
+        j.name,
+        ...ADDR_FIELDS.map((f) => j[f] || ""),
+        fullAddress(j), Number(j.refundAmount || 0).toFixed(2), j.team, j.note,
       ].map(csvCell).join(","));
     });
     // BOM เพื่อให้ Excel อ่านภาษาไทยถูกต้อง
