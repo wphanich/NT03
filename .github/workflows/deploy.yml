@@ -1,0 +1,35 @@
+# Deploy ขึ้น Firebase (Hosting + Firestore rules) อัตโนมัติ
+# - ทุกครั้งที่ push เข้า branch nt03-95409
+# - หรือกดรันเองที่แท็บ Actions > Deploy to Firebase > Run workflow
+# ต้องตั้ง secret ชื่อ FIREBASE_SERVICE_ACCOUNT ก่อน (ดู README หัวข้อ "Deploy อัตโนมัติด้วย GitHub Actions")
+name: Deploy to Firebase
+
+on:
+  push:
+    branches: [nt03-95409]
+  workflow_dispatch:
+
+concurrency:
+  group: firebase-deploy
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Authenticate to Google Cloud
+        uses: google-github-actions/auth@v2
+        with:
+          credentials_json: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
+
+      - name: Deploy
+        run: npx --yes firebase-tools@15.32.1 deploy --only hosting,firestore:rules --project nt03-95409 --non-interactive
