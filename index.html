@@ -179,24 +179,23 @@
               <input type="text" id="addrSoi">
             </div>
             <div>
-              <label for="addrSubdistrict">แขวง/ตำบล <span class="req">*</span></label>
-              <input type="text" id="addrSubdistrict" required>
-              <div class="hint"></div>
-            </div>
-            <div>
-              <label for="addrDistrict">เขต/อำเภอ <span class="req">*</span></label>
-              <input type="text" id="addrDistrict" required>
-              <div class="hint"></div>
-            </div>
-            <div>
               <label for="addrProvince">จังหวัด <span class="req">*</span></label>
-              <input type="text" id="addrProvince" list="provinceList" required placeholder="เลือกหรือพิมพ์จังหวัด">
-              <datalist id="provinceList"></datalist>
+              <select id="addrProvince" required></select>
+              <div class="hint"></div>
+            </div>
+            <div>
+              <label for="addrDistrict"><span id="addrDistrictLabel">เขต/อำเภอ</span> <span class="req">*</span></label>
+              <select id="addrDistrict" required disabled></select>
+              <div class="hint"></div>
+            </div>
+            <div>
+              <label for="addrSubdistrict"><span id="addrSubdistrictLabel">แขวง/ตำบล</span> <span class="req">*</span></label>
+              <select id="addrSubdistrict" required disabled></select>
               <div class="hint"></div>
             </div>
             <div>
               <label for="addrPostcode">รหัสไปรษณีย์</label>
-              <input type="text" id="addrPostcode" inputmode="numeric" maxlength="5">
+              <input type="text" id="addrPostcode" inputmode="numeric" maxlength="5" placeholder="เติมให้อัตโนมัติ">
               <div class="hint"></div>
             </div>
           </div>
@@ -271,6 +270,7 @@
 
 <div class="toast" id="toast"></div>
 
+<script src="thai-address.js"></script>
 <script>
 (function () {
   "use strict";
@@ -296,18 +296,14 @@
   const fields = ["receivedDate", "inspectionType", "taxId", "name"]
     .concat(ADDR_FIELDS, ["refundAmount", "team", "note"]);
   const BANGKOK = "กรุงเทพมหานคร";
-  const PROVINCES = [
-    BANGKOK, "กระบี่", "กาญจนบุรี", "กาฬสินธุ์", "กำแพงเพชร", "ขอนแก่น", "จันทบุรี", "ฉะเชิงเทรา",
-    "ชลบุรี", "ชัยนาท", "ชัยภูมิ", "ชุมพร", "เชียงราย", "เชียงใหม่", "ตรัง", "ตราด", "ตาก",
-    "นครนายก", "นครปฐม", "นครพนม", "นครราชสีมา", "นครศรีธรรมราช", "นครสวรรค์", "นนทบุรี",
-    "นราธิวาส", "น่าน", "บึงกาฬ", "บุรีรัมย์", "ปทุมธานี", "ประจวบคีรีขันธ์", "ปราจีนบุรี",
-    "ปัตตานี", "พระนครศรีอยุธยา", "พะเยา", "พังงา", "พัทลุง", "พิจิตร", "พิษณุโลก", "เพชรบุรี",
-    "เพชรบูรณ์", "แพร่", "ภูเก็ต", "มหาสารคาม", "มุกดาหาร", "แม่ฮ่องสอน", "ยะลา", "ยโสธร",
-    "ร้อยเอ็ด", "ระนอง", "ระยอง", "ราชบุรี", "ลพบุรี", "ลำปาง", "ลำพูน", "เลย", "ศรีสะเกษ",
-    "สกลนคร", "สงขลา", "สตูล", "สมุทรปราการ", "สมุทรสงคราม", "สมุทรสาคร", "สระแก้ว", "สระบุรี",
-    "สิงห์บุรี", "สุโขทัย", "สุพรรณบุรี", "สุราษฎร์ธานี", "สุรินทร์", "หนองคาย", "หนองบัวลำภู",
-    "อ่างทอง", "อำนาจเจริญ", "อุดรธานี", "อุตรดิตถ์", "อุทัยธานี", "อุบลราชธานี",
-  ];
+  // จังหวัด > เขต/อำเภอ > แขวง/ตำบล > รหัสไปรษณีย์ (ข้อมูลจาก thai-address.js)
+  const GEO = new Map();
+  (window.THAI_ADDRESS || []).forEach(([prov, districts]) => {
+    const dm = new Map();
+    districts.forEach(([dist, subs]) => dm.set(dist, new Map(subs.map(([sub, zip]) => [sub, String(zip)]))));
+    GEO.set(prov, dm);
+  });
+  const thSort = (arr) => arr.sort((a, b) => a.localeCompare(b, "th"));
 
   // รวมที่อยู่เป็นข้อความเดียว (กทม. ใช้ แขวง/เขต จังหวัดอื่นใช้ ตำบล/อำเภอ)
   function fullAddress(j) {
@@ -408,12 +404,82 @@
     return Array.from(set).sort((a, b) => a.localeCompare(b, "th"));
   }
 
+  // ---------- ที่อยู่: เลือกจังหวัด > เขต/อำเภอ > แขวง/ตำบล ----------
+  // หากโหลด thai-address.js ไม่ได้ ให้กลับไปใช้ช่องพิมพ์ข้อความแทน
+  if (!GEO.size) {
+    ["addrProvince", "addrDistrict", "addrSubdistrict"].forEach((id) => {
+      const input = document.createElement("input");
+      input.type = "text";
+      input.id = id;
+      input.required = true;
+      $(id).replaceWith(input);
+    });
+  }
+
+  function fillOptions(sel, values, placeholder, keep) {
+    const opts = ['<option value="">' + placeholder + "</option>"]
+      .concat(values.map((v) => '<option value="' + esc(v) + '">' + esc(v) + "</option>"));
+    // ค่าที่บันทึกไว้แต่ไม่อยู่ในรายการ (เช่น ข้อมูลเก่า) ยังคงเลือกไว้ได้
+    if (keep && !values.includes(keep)) {
+      opts.push('<option value="' + esc(keep) + '">' + esc(keep) + " (ไม่อยู่ในรายการ)</option>");
+    }
+    sel.innerHTML = opts.join("");
+    sel.value = keep || "";
+    sel.disabled = opts.length === 1;
+  }
+
+  function updateAddrLabels(prov) {
+    const bkk = prov === BANGKOK;
+    $("addrDistrictLabel").textContent = !prov ? "เขต/อำเภอ" : bkk ? "เขต" : "อำเภอ";
+    $("addrSubdistrictLabel").textContent = !prov ? "แขวง/ตำบล" : bkk ? "แขวง" : "ตำบล";
+  }
+
+  function setAddress(prov, dist, sub) {
+    updateAddrLabels(prov);
+    if (!GEO.size) {
+      $("addrProvince").value = prov || "";
+      $("addrDistrict").value = dist || "";
+      $("addrSubdistrict").value = sub || "";
+      return;
+    }
+    const dm = GEO.get(prov);
+    const sm = dm && dm.get(dist);
+    const bkk = prov === BANGKOK;
+    fillOptions($("addrProvince"), thSort(Array.from(GEO.keys())), "-- เลือกจังหวัด --", prov);
+    fillOptions($("addrDistrict"), dm ? thSort(Array.from(dm.keys())) : [],
+                bkk ? "-- เลือกเขต --" : "-- เลือกอำเภอ --", dist);
+    fillOptions($("addrSubdistrict"), sm ? thSort(Array.from(sm.keys())) : [],
+                bkk ? "-- เลือกแขวง --" : "-- เลือกตำบล --", sub);
+  }
+
+  function zipOf(prov, dist, sub) {
+    const dm = GEO.get(prov);
+    const sm = dm && dm.get(dist);
+    return (sm && sm.get(sub)) || "";
+  }
+
+  if (GEO.size) {
+    $("addrProvince").addEventListener("change", () => {
+      setAddress($("addrProvince").value, "", "");
+      $("addrPostcode").value = "";
+    });
+    $("addrDistrict").addEventListener("change", () => {
+      setAddress($("addrProvince").value, $("addrDistrict").value, "");
+      $("addrPostcode").value = "";
+    });
+    $("addrSubdistrict").addEventListener("change", () => {
+      $("addrPostcode").value = zipOf($("addrProvince").value, $("addrDistrict").value,
+                                      $("addrSubdistrict").value);
+    });
+  }
+
   // ---------- form ----------
   function resetForm() {
     form.reset();
     editingId = null;
     $("receivedDate").value = todayISO();
     $("team").value = DEFAULT_TEAM;
+    setAddress("", "", "");
     $("formTitle").textContent = "บันทึกรับงานใหม่";
     $("editingBanner").style.display = "none";
     $("cancelEditBtn").style.display = "none";
@@ -529,6 +595,7 @@
     if (!j) return;
     editingId = id;
     fields.forEach((f) => { $(f).value = j[f] == null ? "" : j[f]; });
+    setAddress(j.addrProvince, j.addrDistrict, j.addrSubdistrict);
     $("taxId").value = formatTaxId(j.taxId);
     $("refundAmount").value = j.refundAmount ? money(j.refundAmount) : "";
     $("formTitle").textContent = "แก้ไขข้อมูลงาน";
@@ -595,7 +662,6 @@
     fillSelect($("fTeam"), uniqueValues("team"), "ทุกทีม");
     fillDatalist($("inspectionTypeList"), uniqueValues("inspectionType", DEFAULT_TYPES));
     fillDatalist($("teamList"), uniqueValues("team", [DEFAULT_TEAM]));
-    if (!$("provinceList").options.length) fillDatalist($("provinceList"), PROVINCES);
 
     const rows = filtered();
     const tbody = $("tbody");
