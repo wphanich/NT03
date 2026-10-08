@@ -10,7 +10,7 @@ import {
 import { firebaseConfig } from "./firebase-config.js";
 
 {
-  const DEFAULT_TEAM = "นต03";
+  const TEAMS = ["นต031", "นต032", "นต033", "นต034", "นต035", "นต036", "นต037"];
   const OTHER_TYPE = "ตรวจอื่นๆ"; // เลือกแล้วต้องพิมพ์ระบุเพิ่มในช่อง inspectionOther
   const DEFAULT_TYPES = [
     "ตรวจคืนภาษีมูลค่าเพิ่ม (ภ.พ.30)",
@@ -330,7 +330,7 @@ import { firebaseConfig } from "./firebase-config.js";
     form.reset();
     editingId = null;
     $("receivedDate").value = todayISO();
-    $("team").value = DEFAULT_TEAM;
+    fillOptions($("team"), TEAMS, "-- เลือกทีม --", "");
     setAddress("", "", "");
     setInspectionType("", "");
     $("formTitle").textContent = "บันทึกรับงานใหม่";
@@ -467,6 +467,7 @@ import { firebaseConfig } from "./firebase-config.js";
     fields.forEach((f) => { $(f).value = j[f] == null ? "" : j[f]; });
     setAddress(j.addrProvince, j.addrDistrict, j.addrSubdistrict);
     setInspectionType(j.inspectionType, j.inspectionOther);
+    fillOptions($("team"), TEAMS, "-- เลือกทีม --", j.team);
     $("taxId").value = formatTaxId(j.taxId);
     $("refundAmount").value = j.refundAmount ? money(j.refundAmount) : "";
     $("formTitle").textContent = "แก้ไขข้อมูลงาน";
@@ -506,9 +507,6 @@ import { firebaseConfig } from "./firebase-config.js";
       values.map((v) => '<option value="' + esc(v) + '">' + esc(v) + "</option>").join("");
     sel.value = values.includes(cur) ? cur : "";
   }
-  function fillDatalist(dl, values) {
-    dl.innerHTML = values.map((v) => '<option value="' + esc(v) + '">').join("");
-  }
 
   function filtered() {
     const q = $("fSearch").value.trim().toLowerCase();
@@ -538,8 +536,7 @@ import { firebaseConfig } from "./firebase-config.js";
 
   function render() {
     fillSelect($("fType"), uniqueValues("inspectionType"), "ทุกประเภทการตรวจ");
-    fillSelect($("fTeam"), uniqueValues("team"), "ทุกทีม");
-    fillDatalist($("teamList"), uniqueValues("team", [DEFAULT_TEAM]));
+    fillSelect($("fTeam"), uniqueValues("team", TEAMS), "ทุกทีม");
 
     const rows = filtered();
     const tbody = $("tbody");
