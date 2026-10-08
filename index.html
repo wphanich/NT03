@@ -179,6 +179,10 @@
               <input type="text" id="addrSoi">
             </div>
             <div>
+              <label for="addrRoad">ถนน</label>
+              <input type="text" id="addrRoad">
+            </div>
+            <div>
               <label for="addrProvince">จังหวัด <span class="req">*</span></label>
               <select id="addrProvince" required></select>
               <div class="hint"></div>
@@ -290,7 +294,7 @@
 
   const $ = (id) => document.getElementById(id);
   const form = $("jobForm");
-  const ADDR_FIELDS = ["addrNo", "addrBuilding", "addrFloor", "addrSoi",
+  const ADDR_FIELDS = ["addrNo", "addrBuilding", "addrFloor", "addrSoi", "addrRoad",
                        "addrSubdistrict", "addrDistrict", "addrProvince", "addrPostcode"];
   const ADDR_REQUIRED = ["addrNo", "addrSubdistrict", "addrDistrict", "addrProvince"];
   const fields = ["receivedDate", "inspectionType", "taxId", "name"]
@@ -314,6 +318,7 @@
       j.addrBuilding && "อาคาร" + j.addrBuilding,
       j.addrFloor && "ชั้น " + j.addrFloor,
       j.addrSoi && "ซอย" + j.addrSoi,
+      j.addrRoad && "ถนน" + j.addrRoad,
       j.addrSubdistrict && (bkk ? "แขวง" : "ตำบล") + j.addrSubdistrict,
       j.addrDistrict && (bkk ? "เขต" : "อำเภอ") + j.addrDistrict,
       j.addrProvince && (bkk ? j.addrProvince : "จังหวัด" + j.addrProvince),
@@ -730,7 +735,7 @@
     const rows = filtered();
     if (!rows.length) { toast("ไม่มีข้อมูลให้ส่งออก"); return; }
     const header = ["ลำดับ", "วัน เดือน ปี รับงาน", "ประเภทการตรวจ", "เลขประจำตัวผู้เสียภาษี",
-                    "ชื่อ", "เลขที่", "อาคาร", "ชั้น", "ซอย", "แขวง/ตำบล", "เขต/อำเภอ",
+                    "ชื่อ", "เลขที่", "อาคาร", "ชั้น", "ซอย", "ถนน", "แขวง/ตำบล", "เขต/อำเภอ",
                     "จังหวัด", "รหัสไปรษณีย์", "ที่อยู่เต็ม", "จำนวนเงินคืนภาษี", "ทีม", "หมายเหตุ"];
     const lines = [header.map(csvCell).join(",")];
     rows.forEach((j, i) => {
